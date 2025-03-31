@@ -1,0 +1,6 @@
+Step 1: Go to Setup folder > Debug folder
+Step 2: Launch 'FileIO_Setup'
+Step 3: Click 'Next' > Click 'Next' > Click 'Next'
+Step 4: Select 'Yes', then click 'Close'
+Step 5: Navigate to the 'File IO' desktop shortcut
+Step 6: Complete!

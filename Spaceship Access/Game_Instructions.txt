@@ -1,0 +1,3 @@
+﻿This game is an interactive simulation where you play as a stow-away
+on a spaceship. You have to gain access to the main ship and a private room
+to steal loot and items!
