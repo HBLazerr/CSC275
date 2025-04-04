@@ -1,0 +1,26 @@
+# Visual Studio Files
+
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+
+# Build output
+
+Debug/
+Release/
+x64/
+*.exe
+*.dll
+*.obj
+*.pdb
+*.ipch
+*.log
+
+
+# Project-specific
+
+Hero Creator/x64/
+Hero Creator/x64/Debug/
