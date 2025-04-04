@@ -1,16 +1,36 @@
 Larius
-Hunter
+Warlock
 99
 Mars Desert
 Mimic Staff
 182
 Red, White
 Emptic Clan
+1
 Vindor
-Warlock
+Hunter
 34
-Planet B-703
+Planet B-702
 Raygun
-1391
-Blue, Black
+1393
+Black, Blue
 Emptic Clan
+0
+Deimo
+Warlock
+87
+Distorted Realm
+Thunder Gauntlet
+211
+Red, Green
+New Reign
+1
+Aether
+Hunter
+25
+Jupiter
+Mace
+100
+Blue, White
+New Reign
+0

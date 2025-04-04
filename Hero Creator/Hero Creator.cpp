@@ -1,4 +1,4 @@
-// Hero Creator version 1.0
+// Hero Creator version 2.0
 // Daniel Chavez
 // Demo video - 
 
@@ -400,67 +400,65 @@ public:
     void loadHeroes() {
         ifstream infile("heroes.txt");
         if (infile.is_open()) {
-            string name;
-            string type;
-            int level;
-            string origin;
-            string weapon;
-            int eliminations;
-            string colors;
-			string faction; 
-
+            string name, type, origin, weapon, colors, faction;
+            int level, eliminations;
 
             //read in each heros information from the file and create new hero objects
-            while (getline(infile, name)) {
-                getline(infile, type);
-                infile >> level;
+            while (true) {
+                // make sure all input is clean
+                if (!getline(infile, name)) break;
+                if (!getline(infile, type)) break;
+                if (!(infile >> level)) break;
                 infile.ignore();
-
-                getline(infile, origin);
-                getline(infile, weapon);
-                infile >> eliminations;
+                if (!getline(infile, origin)) break;
+                if (!getline(infile, weapon)) break;
+                if (!(infile >> eliminations)) break;
                 infile.ignore();
-
-                getline(infile, colors);
-                getline(infile, faction);
+                if (!getline(infile, colors)) break;
+                if (!getline(infile, faction)) break;
 
                 if (type == "Hunter") {
                     bool stealth;
-                    infile >> stealth;
-                    heroes.push_back(new Hunter(name, "Hunter", level, origin, weapon, eliminations, colors, faction, true));
-					heroMap[name] = heroes.back(); //add to hash table
+                    if (!(infile >> stealth)) break;
+                    infile.ignore();
 
+                    heroes.push_back(new Hunter(name, type, level, origin, weapon, eliminations, colors, faction, stealth));
+                    heroMap[name] = heroes.back(); //add to hash table
                     factionGraph[faction].push_back(name); //rebuild faction graph
-                    heroFactions[name] = faction; //rebuild reverse map
+                    heroFactions[name] = faction;
 
-                    //reconnect heroes in same faction after loading
                     for (const auto& pair : heroFactions) {
                         if (pair.first != name && pair.second == faction) {
                             heroGraph[name].push_back(pair.first);
                             heroGraph[pair.first].push_back(name);
                         }
                     }
-
                 }
                 else if (type == "Warlock") {
                     bool spellcast;
-                    infile >> spellcast;
-                    heroes.push_back(new Warlock(name, "Warlock", level, origin, weapon, eliminations, colors, faction, true));
-					heroMap[name] = heroes.back(); //add to hash table
+                    if (!(infile >> spellcast)) break;
+                    infile.ignore();
 
+                    heroes.push_back(new Warlock(name, type, level, origin, weapon, eliminations, colors, faction, spellcast));
+                    heroMap[name] = heroes.back(); //add to hash table
                     factionGraph[faction].push_back(name); //rebuild faction graph
-                    heroFactions[name] = faction; //rebuild reverse map
+                    heroFactions[name] = faction;
 
-                    //reconnect heroes in the same faction after loading
                     for (const auto& pair : heroFactions) {
                         if (pair.first != name && pair.second == faction) {
                             heroGraph[name].push_back(pair.first);
                             heroGraph[pair.first].push_back(name);
                         }
                     }
-
+                }
+                else {
+                    // unknown hero type — skip or break
+                    break;
                 }
             }
+
+
+
 
             infile.close();
             cout << "All heroes have been loaded from file." << endl;
@@ -469,6 +467,7 @@ public:
             cout << "Error: Unable to open file. Please try again.\n";
         }
     }
+
 
     // Allows user to search and view hero info by name
     void findHeroByName() {
@@ -568,7 +567,7 @@ int main()
     HeroCreator obj_heroCreator;
 
     //sets custom console app colors
-    system("Color 01");
+    system("Color 09");
 
     //calls DisplayTitle method
     obj_creatorIntro.DisplayTitle();
