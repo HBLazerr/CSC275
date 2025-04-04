@@ -7,6 +7,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm> //for sorting feature
+#include <unordered_map> //for hash table
+#include <queue> //for Breadth First Search (BFS) graph
 #include <fstream>
 #include "CreatorIntro.h" //for DisplayTitle function
 #include "ExitCreator.h" //for CreatorExit function
@@ -25,10 +28,11 @@ private:
     string Weapon;
     int Eliminations;
     string Colors;
+    string Faction; //stores faction/group that the hero belongs to
 
 public:
     //constructor to initialize variables and assign values
-    Hero(string name, string type, int level, string origin, string weapon, int eliminations, string colors) : Name(name), Type(type), Level(level), Origin(origin), Weapon(weapon), Eliminations(eliminations), Colors(colors) {}
+    Hero(string name, string type, int level, string origin, string weapon, int eliminations, string colors, string faction) : Name(name), Type(type), Level(level), Origin(origin), Weapon(weapon), Eliminations(eliminations), Colors(colors), Faction(faction) {}
 
     // Get functions
     string getName() {
@@ -52,6 +56,9 @@ public:
     string getColors() {
         return Colors;
     }
+	string getFaction() {
+		return Faction;
+	}
 
 
     // Set functions
@@ -76,6 +83,9 @@ public:
     void setColors(string colors) {
         Colors = colors;
     }
+	void setFaction(string faction) {
+		Faction = faction;
+	}
 
 
     // Data handling functions
@@ -87,6 +97,7 @@ public:
         cout << "Weapon: " << Weapon << endl;
         cout << "Eliminations: " << Eliminations << endl;
         cout << "Suit Colors: " << Colors << endl;
+		cout << "Faction: " << Faction << endl;
     }
     void saveInfo(ofstream& outfile) {
         outfile << Name << endl;
@@ -96,6 +107,7 @@ public:
         outfile << Weapon << endl;
         outfile << Eliminations << endl;
         outfile << Colors << endl;
+		outfile << Faction << endl;
     }
     void loadInfo(ifstream& infile) {
         getline(infile, Name);
@@ -105,6 +117,7 @@ public:
         getline(infile, Weapon);
         infile >> Eliminations;
         getline(infile, Colors);
+		getline(infile, Faction);
         infile.ignore();
     }
 };
@@ -119,7 +132,7 @@ public:
     string Type = "Hunter";
 
     // constructor for hunter class
-    Hunter(string name, string type, int level, string origin, string weapon, int eliminations, string colors, bool stealth) : Hero(name, type, level, origin, weapon, eliminations, colors), Stealth(stealth) {}
+    Hunter(string name, string type, int level, string origin, string weapon, int eliminations, string colors, string faction, bool stealth) : Hero(name, type, level, origin, weapon, eliminations, colors, faction), Stealth(stealth) {}
     
     //displays info of Hunter object
     void displayInfo() {
@@ -148,7 +161,7 @@ public:
     string Type = "Warlock";
 
     // constructor for Warlock class
-    Warlock(string name, string type, int level, string origin, string weapon, int eliminations, string colors, bool spellcast) : Hero(name, type, level, origin, weapon, eliminations, colors), Spellcast(spellcast) {}
+    Warlock(string name, string type, int level, string origin, string weapon, int eliminations, string colors, string faction, bool spellcast) : Hero(name, type, level, origin, weapon, eliminations, colors, faction), Spellcast(spellcast) {}
 
     //displays info of Warlock object
     void displayInfo() {
@@ -175,6 +188,31 @@ public:
     //allows to create the hero types
     vector<Hero*> heroes;
 
+    //map used to quickly look up heroes by name
+    unordered_map<string, Hero*> heroMap;
+
+    //maps faction name to list of hero names
+    unordered_map<string, vector<string>> factionGraph;
+
+    //assigns aka maps their hero name to faction 
+    // this is so it can reverse lookup
+    unordered_map<string, string> heroFactions;
+
+    // hero graph
+    //each hero is a node connected to others in same faction
+    unordered_map<string, vector<string>> heroGraph;
+
+
+	//made some default factions to start with
+    HeroCreator() {
+        //no heroes assigned yet
+        factionGraph["New Reign"];
+        factionGraph["Hearts Break"];
+        factionGraph["Assassins Syndicate"];
+        factionGraph["Emptic Clan"];
+    }
+
+
     void createHunter() {
         string Name;
         string Type = "Hunter";
@@ -183,6 +221,7 @@ public:
         string Weapon;
         int Eliminations;
         string Colors;
+        string Faction;
         bool Stealth = true;
 
 
@@ -206,14 +245,24 @@ public:
         cout << "How many lives has " << Name << " taken? ";
         cin >> Eliminations;
 
-        cout << "Lastly, choose their two suit colors: ";
+        cout << "Choose their two suit colors (One, Two): ";
         cin.ignore();
         getline(cin, Colors);
 
+		cout << "\nAvailable factions: New Reign, Hearts Break, Assassins Syndicate, Emptic Clan\n";
+        cout << "Which faction does " << Name << " belong to? ";
+        getline(cin, Faction);
 
-        // adds new Hunter object with parameters to the end of the heroes vector.
+
+
+        // adds new Hunter object with parameters to end of heroes vector
         //push.back puts it at end of heroes vector
-        heroes.push_back(new Hunter(Name, Type, Level, Origin, Weapon, Eliminations, Colors, Stealth));
+        heroes.push_back(new Hunter(Name, Type, Level, Origin, Weapon, Eliminations, Colors, Faction, Stealth));
+        heroMap[Name] = heroes.back(); //also add to map for fast lookup
+
+        factionGraph[Faction].push_back(Name); //track faction
+        heroFactions[Name] = Faction;
+
         cout << "\nHero successfully created. ";
         system("pause");
     }
@@ -226,6 +275,7 @@ public:
         string Weapon;
         int Eliminations;
         string Colors;
+        string Faction;
         bool Spellcast = true;
 
 
@@ -253,10 +303,18 @@ public:
         cin.ignore();
         getline(cin, Colors);
 
+        cout << "Which faction does " << Name << " belong to? ";
+        getline(cin, Faction);
 
-        // adds new Warlock object with parameters to the end of the heroes vector.
+
+        // adds new Warlock object with parameters to end of heroes vector
         //push.back puts it at end of heroes vector
-        heroes.push_back(new Warlock(Name, Type, Level, Origin, Weapon, Eliminations, Colors, Spellcast));
+        heroes.push_back(new Warlock(Name, Type, Level, Origin, Weapon, Eliminations, Colors, Faction, Spellcast));
+        heroMap[Name] = heroes.back(); //also add to map for fast lookup
+
+		factionGraph[Faction].push_back(Name); //track faction
+        heroFactions[Name] = Faction;
+
         cout << "\nHero successfully created. ";
         system("pause");
     }
@@ -272,14 +330,49 @@ public:
         else {
             system("pause");
 
+            //ask user how they want the list sorted
+            int sortChoice;
+            cout << "\nHow would you like to sort the heroes?\n";
+            cout << "1. Name (A-Z)\n";
+            cout << "2. Level (Lowest to Highest)\n";
+            cout << "3. Eliminations (Lowest to Highest)\n";
+            cout << "Enter your choice: ";
+            cin >> sortChoice;
+
+            //create a copy of the hero list so we don't affect the original
+            vector<Hero*> sortedHeroes = heroes;
+
+            //define sort options
+            switch (sortChoice) {
+            case 1:
+                sort(sortedHeroes.begin(), sortedHeroes.end(), [](Hero* a, Hero* b) {
+                    return a->getName() < b->getName();
+                    });
+                break;
+            case 2:
+                sort(sortedHeroes.begin(), sortedHeroes.end(), [](Hero* a, Hero* b) {
+                    return a->getLevel() < b->getLevel();
+                    });
+                break;
+            case 3:
+                sort(sortedHeroes.begin(), sortedHeroes.end(), [](Hero* a, Hero* b) {
+                    return a->getEliminations() < b->getEliminations();
+                    });
+                break;
+            default:
+                cout << "Invalid choice. Showing unsorted list.\n";
+            }
+
             cout << "\n\t*** All Created Heroes and Features ***\n\n";
-            // loops through all heroes and calls their display function
-            for (int i = 0; i < heroes.size(); i++) {
-                heroes[i]->displayInfo();
+
+            //display each hero from the sorted list
+            for (int i = 0; i < sortedHeroes.size(); i++) {
+                sortedHeroes[i]->displayInfo();
                 cout << endl;
-             }
+            }
         }
     }
+
 
     // Saves list of heroes to file
     void saveHeroes() {
@@ -314,27 +407,58 @@ public:
             string weapon;
             int eliminations;
             string colors;
+			string faction; 
 
 
             //read in each heros information from the file and create new hero objects
             while (getline(infile, name)) {
                 getline(infile, type);
                 infile >> level;
+                infile.ignore();
+
                 getline(infile, origin);
                 getline(infile, weapon);
                 infile >> eliminations;
-                getline(infile, colors);
                 infile.ignore();
+
+                getline(infile, colors);
+                getline(infile, faction);
 
                 if (type == "Hunter") {
                     bool stealth;
                     infile >> stealth;
-                    heroes.push_back(new Hunter(name, "Hunter", level, origin, weapon, eliminations, colors, true));
+                    heroes.push_back(new Hunter(name, "Hunter", level, origin, weapon, eliminations, colors, faction, true));
+					heroMap[name] = heroes.back(); //add to hash table
+
+                    factionGraph[faction].push_back(name); //rebuild faction graph
+                    heroFactions[name] = faction; //rebuild reverse map
+
+                    //reconnect heroes in same faction after loading
+                    for (const auto& pair : heroFactions) {
+                        if (pair.first != name && pair.second == faction) {
+                            heroGraph[name].push_back(pair.first);
+                            heroGraph[pair.first].push_back(name);
+                        }
+                    }
+
                 }
                 else if (type == "Warlock") {
                     bool spellcast;
                     infile >> spellcast;
-                    heroes.push_back(new Warlock(name, "Warlock", level, origin, weapon, eliminations, colors, true));
+                    heroes.push_back(new Warlock(name, "Warlock", level, origin, weapon, eliminations, colors, faction, true));
+					heroMap[name] = heroes.back(); //add to hash table
+
+                    factionGraph[faction].push_back(name); //rebuild faction graph
+                    heroFactions[name] = faction; //rebuild reverse map
+
+                    //reconnect heroes in the same faction after loading
+                    for (const auto& pair : heroFactions) {
+                        if (pair.first != name && pair.second == faction) {
+                            heroGraph[name].push_back(pair.first);
+                            heroGraph[pair.first].push_back(name);
+                        }
+                    }
+
                 }
             }
 
@@ -345,6 +469,90 @@ public:
             cout << "Error: Unable to open file. Please try again.\n";
         }
     }
+
+    // Allows user to search and view hero info by name
+    void findHeroByName() {
+        string searchName;
+        cout << "Enter name of the hero your looking for: ";
+        cin.ignore();
+        getline(cin, searchName);
+
+        if (heroMap.find(searchName) != heroMap.end()) {
+            cout << "\nHero Found:\n\n";
+            heroMap[searchName]->displayInfo();
+        }
+        else {
+            cout << "\nNo hero named \"" << searchName << "\" was found.\n";
+        }
+
+        system("pause");
+    }
+
+    // Shows all factions and their member heroes
+    void showFactions() {
+        if (factionGraph.empty()) {
+            cout << "No factions are formed right now.\n";
+            return;
+        }
+
+        cout << "\n\t*** Factions and Their Members ***\n\n";
+        for (const auto& pair : factionGraph) {
+            cout << "Faction: " << pair.first << endl;
+            cout << "Members: ";
+            for (const string& heroName : pair.second) {
+                cout << heroName << ", ";
+            }
+            cout << "\n\n";
+        }
+
+        system("pause");
+    }
+
+    // Explores connected heroes aka clan allies starting from a selected hero
+	// uses BFS to find all connected heroes in same faction
+	// BFS is used to explore the graph of heroes
+    void exploreHeroConnections() {
+        if (heroGraph.empty()) {
+            cout << "There are no hero connections yet.\n";
+            return;
+        }
+
+        string start;
+        cout << "Enter the name of a hero to find their allies: ";
+        cin.ignore();
+        getline(cin, start);
+
+        if (heroGraph.find(start) == heroGraph.end()) {
+            cout << "That hero does not exist or has no allies.\n";
+            return;
+        }
+
+        unordered_map<string, bool> visited;
+        queue<string> q;
+
+        q.push(start);
+        visited[start] = true;
+
+        cout << "\nAllied heroes starting from: " << start << "\n\n";
+
+        while (!q.empty()) {
+            string current = q.front();
+            q.pop();
+
+            cout << "- " << current << endl;
+
+            for (const string& neighbor : heroGraph[current]) {
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    q.push(neighbor);
+                }
+            }
+        }
+
+        system("pause");
+    }
+
+
 
 };
 
@@ -372,8 +580,11 @@ int main()
         cout << "\nOptions:\n";
         cout << "1. Create a Hero\n";
         cout << "2. Display Heroes\n";
-        cout << "3. Save Current Heroes\n";
-        cout << "4. Load Previous Heroes\n";
+        cout << "3. Search for Hero by Name\n"; //hash table search
+        cout << "4. Save Current Heroes\n";
+        cout << "5. Load Previous Heroes\n";
+        cout << "6. Show Factions and Members\n";
+        cout << "7. View Hero Alliances (BFS)\n";
         cout << "0. Quit\n";
         cout << "\nEnter your choice: ";
         cin.clear();
@@ -415,13 +626,27 @@ int main()
         }
         else if (choice == 3)
         {
+            // Searches for hero using hash table
+            obj_heroCreator.findHeroByName(); 
+        }
+
+        else if (choice == 4)
+        {
             //Saves all current heroes to .txt file
             obj_heroCreator.saveHeroes();
         }
-        else if (choice == 4)
+        else if (choice == 5)
         {
             //Loads all heroes from .txt file
             obj_heroCreator.loadHeroes();
+        }
+        else if (choice == 6)
+        {
+            obj_heroCreator.showFactions();
+        }
+        else if (choice == 7)
+        {
+            obj_heroCreator.exploreHeroConnections();
         }
         else if (choice == 0)
         {
